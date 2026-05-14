@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --color-purple-primary: #5B21B6;
+  --color-purple-medium: #7C3AED;
+  --color-purple-light: #EDE9FE;
+  --color-page: #F5F5F7;
+  --color-card: #FFFFFF;
+  --color-heading: #111827;
+  --color-body: #6B7280;
+  --color-border: #E5E7EB;
+  --color-warning-bg: #FFF7ED;
+  --color-warning-border: #FED7AA;
+}
+
+body {
+  background-color: var(--color-page);
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
