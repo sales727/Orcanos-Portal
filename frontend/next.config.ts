@@ -1,17 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: "http://localhost:8000/api/:path*",
-      },
-    ];
-  },
-  experimental: {
-    proxyClientMaxBodySize: 100 * 1024 * 1024, // 100MB
-  },
+  ...(process.env.NODE_ENV === "development" && {
+    async rewrites() {
+      return [
+        {
+          source: "/api/:path*",
+          destination: "http://localhost:8000/api/:path*",
+        },
+      ];
+    },
+  }),
 };
 
 export default nextConfig;
