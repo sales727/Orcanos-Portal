@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import { useState } from "react";
 
 const navLinks = [
   { href: "/automations", label: "Automations" },
@@ -9,10 +11,26 @@ const navLinks = [
   { href: "/admin", label: "Admin" },
 ];
 
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
 export default function NavBar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
+
+  const initials = session?.user?.name
+    ? getInitials(session.user.name)
+    : "?";
 
   return (
     <header className="bg-white border-b border-border h-15 flex items-center px-8 shrink-0">
@@ -40,9 +58,36 @@ export default function NavBar() {
           ))}
         </nav>
 
-        {/* User avatar */}
-        <div className="w-9 h-9 rounded-full bg-purple-primary flex items-center justify-center shrink-0">
-          <span className="text-white text-xs font-semibold">JD</span>
+        {/* Avatar + sign-out */}
+        <div className="relative">
+          <button
+            onClick={() => setOpen((o) => !o)}
+            className="w-9 h-9 rounded-full bg-purple-primary flex items-center justify-center hover:opacity-90 transition-opacity"
+          >
+            <span className="text-white text-xs font-semibold">{initials}</span>
+          </button>
+
+          {open && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setOpen(false)}
+              />
+              <div className="absolute right-0 top-11 z-50 bg-white border border-border rounded-xl shadow-lg p-1 min-w-48">
+                {session?.user?.email && (
+                  <div className="px-3 py-2 text-xs text-body border-b border-border mb-1 truncate">
+                    {session.user.email}
+                  </div>
+                )}
+                <button
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="w-full text-left px-3 py-2 text-sm text-heading hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  Sign out
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>

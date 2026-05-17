@@ -28,13 +28,9 @@ export default function AutomationsPage() {
         Automation Tools
       </h1>
 
-      {/* Filter bar */}
       <div className="bg-card rounded-xl border border-border p-4 mb-6 flex gap-4">
         <div className="relative flex-1">
-          <Search
-            size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-body"
-          />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-body" />
           <input
             type="text"
             placeholder="Search automations..."
@@ -44,32 +40,24 @@ export default function AutomationsPage() {
           />
         </div>
         <div className="relative">
-          <Filter
-            size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-body pointer-events-none"
-          />
+          <Filter size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-body pointer-events-none" />
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="pl-10 pr-8 py-2 text-sm border border-border rounded-lg focus:outline-none focus:border-purple-medium bg-transparent appearance-none cursor-pointer"
           >
             {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Tool list */}
       <div className="space-y-4">
         {filtered.length > 0 ? (
           filtered.map((tool) => <ToolRow key={tool.id} tool={tool} />)
         ) : (
-          <p className="text-center text-body py-12">
-            No automations match your search.
-          </p>
+          <p className="text-center text-body py-12">No automations match your search.</p>
         )}
       </div>
     </div>

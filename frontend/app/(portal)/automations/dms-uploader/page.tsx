@@ -100,19 +100,16 @@ export default function DMSUploaderPage() {
     <div className="min-h-screen bg-page">
       <div className="max-w-7xl mx-auto px-6 py-8">
 
-        {/* Back link */}
         <Link href="/automations" className="inline-flex items-center gap-1.5 text-sm text-purple-medium hover:text-purple-primary mb-6 transition-colors">
           <ArrowLeft size={15} />
           Back to Automations
         </Link>
 
-        {/* Header */}
         <h1 className="text-2xl font-bold text-purple-primary mb-1">DMS Uploader</h1>
         <p className="text-body text-sm mb-8">
           Compare files against live <span className="text-purple-medium">Orcanos DMS</span> data, then batch-upload revisions or create new records.
         </p>
 
-        {/* Description card */}
         <div className="bg-card rounded-xl border border-border p-6 mb-6">
           <h2 className="text-base font-semibold text-heading mb-3">Description</h2>
           <p className="text-body text-sm leading-relaxed mb-4">
@@ -182,7 +179,6 @@ export default function DMSUploaderPage() {
           </div>
         </div>
 
-        {/* Configuration card */}
         <div className="bg-card rounded-xl border border-border p-6 mb-6 space-y-5">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-heading">Configuration</h2>
@@ -233,7 +229,6 @@ export default function DMSUploaderPage() {
             <input type="text" placeholder="Leave blank for project pool" value={form.parent_id} onChange={set("parent_id")} className={inputCls} />
           </Field>
 
-          {/* File upload */}
           <Field label="DMS Files" required>
             <div
               onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -241,9 +236,7 @@ export default function DMSUploaderPage() {
               onDrop={(e) => { e.preventDefault(); setIsDragging(false); addFiles(e.dataTransfer.files); }}
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-lg p-10 text-center cursor-pointer transition-colors ${
-                isDragging
-                  ? "border-purple-medium bg-purple-light/20"
-                  : "border-border bg-gray-50 hover:border-purple-medium hover:bg-purple-light/10"
+                isDragging ? "border-purple-medium bg-purple-light/20" : "border-border bg-gray-50 hover:border-purple-medium hover:bg-purple-light/10"
               }`}
             >
               <Upload className="mx-auto mb-3 text-body" size={22} />
@@ -269,7 +262,6 @@ export default function DMSUploaderPage() {
           </Field>
         </div>
 
-        {/* Warning */}
         <div className="flex items-start gap-3 bg-warning-bg border border-warning-border rounded-lg px-4 py-3 mb-6">
           <AlertTriangle size={15} className="text-orange-500 mt-0.5 shrink-0" />
           <p className="text-sm text-orange-800">
@@ -277,7 +269,6 @@ export default function DMSUploaderPage() {
           </p>
         </div>
 
-        {/* Actions */}
         <div className="flex justify-end gap-3 mb-8">
           <Link href="/automations">
             <button className="px-5 py-2.5 text-sm font-medium text-heading border border-border rounded-full hover:bg-gray-50 transition-colors">
@@ -294,19 +285,15 @@ export default function DMSUploaderPage() {
           </button>
         </div>
 
-        {/* Error */}
         {runError && (
           <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-6 text-sm text-red-700">
             {runError}
           </div>
         )}
 
-        {/* Results */}
         {results && (
           <div className="bg-card rounded-xl border border-border p-6">
             <h2 className="text-base font-semibold text-heading mb-4">Results</h2>
-
-            {/* Summary badges */}
             <div className="flex flex-wrap gap-2 mb-5">
               {(["CREATE", "UPDATE", "SAME", "HOLD"] as const).map((a) => {
                 const count = results.filter((r) => r.action === a).length;
@@ -318,7 +305,6 @@ export default function DMSUploaderPage() {
               })}
             </div>
 
-            {/* Table */}
             <div className="overflow-x-auto rounded-lg border border-border">
               <table className="w-full text-sm">
                 <thead>
@@ -353,27 +339,22 @@ export default function DMSUploaderPage() {
                         )}
                       </td>
                       <td className="py-3 px-3 whitespace-nowrap">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${ACTION_STYLE[r.action]}`}>
-                          {r.action}
-                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${ACTION_STYLE[r.action]}`}>{r.action}</span>
                       </td>
                       <td className="py-3 px-3 font-medium text-heading whitespace-nowrap">
                         {(r.action === "UPDATE" || r.action === "CREATE") ? (
-                          <input value={r.dms_number} onChange={(e) => updateResult(i, "dms_number", e.target.value)}
-                            className={editInputCls} />
+                          <input value={r.dms_number} onChange={(e) => updateResult(i, "dms_number", e.target.value)} className={editInputCls} />
                         ) : r.dms_number}
                       </td>
                       <td className="py-3 px-3 text-body whitespace-nowrap">{r.orcanos_key}</td>
                       <td className="py-3 px-3 text-body">
                         {(r.action === "UPDATE" || r.action === "CREATE") ? (
-                          <input value={r.title} onChange={(e) => updateResult(i, "title", e.target.value)}
-                            className={editInputCls} />
+                          <input value={r.title} onChange={(e) => updateResult(i, "title", e.target.value)} className={editInputCls} />
                         ) : r.title}
                       </td>
                       <td className="py-3 px-3 text-heading whitespace-nowrap">
                         {(r.action === "UPDATE" || r.action === "CREATE") ? (
-                          <input value={r.file_rev} onChange={(e) => updateResult(i, "file_rev", e.target.value)}
-                            className={`${editInputCls} w-16`} />
+                          <input value={r.file_rev} onChange={(e) => updateResult(i, "file_rev", e.target.value)} className={`${editInputCls} w-16`} />
                         ) : r.file_rev}
                       </td>
                       <td className="py-3 px-3 text-body whitespace-nowrap">{r.orcanos_rev}</td>
@@ -383,12 +364,9 @@ export default function DMSUploaderPage() {
                       <td className="py-3 px-3 text-body text-xs min-w-48">{renderReason(r.reason)}</td>
                       <td className="py-3 px-3">
                         {r.suspicious && (
-                          <span
-                            title="Only a PDF was uploaded for this UPDATE. Provide the editable source (DOCX / XLSX / PPTX) to proceed."
-                            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-xs font-medium whitespace-nowrap cursor-help"
-                          >
-                            <Info size={11} />
-                            PDF only
+                          <span title="Only a PDF was uploaded for this UPDATE. Provide the editable source (DOCX / XLSX / PPTX) to proceed."
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-xs font-medium whitespace-nowrap cursor-help">
+                            <Info size={11} />PDF only
                           </span>
                         )}
                       </td>
@@ -398,7 +376,6 @@ export default function DMSUploaderPage() {
               </table>
             </div>
 
-            {/* Upload */}
             <div className="flex justify-end mt-5">
               <button
                 onClick={handleUpload}
@@ -410,7 +387,6 @@ export default function DMSUploaderPage() {
               </button>
             </div>
 
-            {/* Upload result */}
             {uploadResult && (
               <div className="mt-5">
                 <p className={`text-sm font-medium mb-2 ${uploadResult.failed > 0 ? "text-orange-700" : "text-green-700"}`}>
