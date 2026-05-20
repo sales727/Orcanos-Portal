@@ -31,6 +31,20 @@ export const tools: Tool[] = [
     avgDuration: "2–5 minutes",
   },
   {
+    id: "bulk-updater",
+    slug: "bulk-updater",
+    name: "Description Mass Update",
+    description:
+      "Apply a description to all items returned by a saved filter — in bulk, in one click. Source can be a template work item or custom HTML.",
+    icon: "Database",
+    category: "ALM",
+    tags: ["ALM", "Bulk", "API"],
+    status: "available",
+    requiredInputs: "Account, API key, filter ID, description source",
+    expectedOutput: "Updated descriptions on all selected items",
+    avgDuration: "1–10 minutes",
+  },
+  {
     id: "work-item-inspector",
     slug: "work-item-inspector",
     name: "Work Item Inspector",

@@ -2,7 +2,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import dms
+from routers import dms, bulk_updater
 
 app = FastAPI(title="Orcanos Automation Portal API", version="1.0.0")
 
@@ -18,6 +18,7 @@ app.add_middleware(
 )
 
 app.include_router(dms.router)
+app.include_router(bulk_updater.router)
 
 
 @app.get("/api/health")

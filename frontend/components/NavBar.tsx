@@ -99,7 +99,7 @@ function OrcanosMark() {
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
       <path
         d="M14 4C8.477 4 4 8.477 4 14s4.477 10 10 10 10-4.477 10-10"
-        stroke="#5B21B6"
+        stroke="#6B3CA6"
         strokeWidth="2.5"
         strokeLinecap="round"
       />
