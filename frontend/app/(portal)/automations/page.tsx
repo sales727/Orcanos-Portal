@@ -3,7 +3,10 @@
 import { useState, useMemo } from "react";
 import { Search, Filter } from "lucide-react";
 import ToolRow from "@/components/ToolRow";
-import { tools, categories } from "@/lib/tools";
+import { tools } from "@/lib/tools";
+
+const availableTools = tools.filter((t) => t.status === "available");
+const categories = ["All", ...Array.from(new Set(availableTools.map((t) => t.category)))];
 
 export default function AutomationsPage() {
   const [query, setQuery] = useState("");
@@ -11,7 +14,7 @@ export default function AutomationsPage() {
 
   const filtered = useMemo(
     () =>
-      tools.filter((t) => {
+      availableTools.filter((t) => {
         const matchesQuery =
           t.name.toLowerCase().includes(query.toLowerCase()) ||
           t.description.toLowerCase().includes(query.toLowerCase()) ||
