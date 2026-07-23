@@ -45,6 +45,20 @@ export const tools: Tool[] = [
     avgDuration: "1–10 minutes",
   },
   {
+    id: "importer",
+    slug: "importer",
+    name: "Orcanos Importer",
+    description:
+      "Bulk-import work items from an Excel file — connect to a project, map columns to Orcanos fields, and import in one click.",
+    icon: "Upload",
+    category: "ALM",
+    tags: ["ALM", "Import", "API"],
+    status: "available",
+    requiredInputs: "Orcanos credentials, project, and an .xlsx file",
+    expectedOutput: "Created/updated items in Orcanos, with a downloadable results report",
+    avgDuration: "1–15 minutes",
+  },
+  {
     id: "work-item-inspector",
     slug: "work-item-inspector",
     name: "Work Item Inspector",

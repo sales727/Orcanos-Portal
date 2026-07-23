@@ -11,6 +11,12 @@
   --color-border:         #E5E7EB;
   --color-warning-bg:     #FFF7ED;
   --color-warning-border: #FED7AA;
+  --color-danger:         #DC3545;
+  --color-danger-dark:    #B91C1C;
+  --color-success:        #16A34A;
+  --color-success-dark:   #15803D;
+  --color-warning:        #F59E0B;
+  --color-warning-dark:   #92400E;
 }
 
 :root {
@@ -163,6 +169,15 @@ body {
   cursor: pointer; transition: background .15s, border-color .15s;
 }
 .btn-secondary:hover { background: var(--page-bg); border-color: #C4B5D6; color: var(--text); }
+
+.btn-danger {
+  background: var(--color-danger); color: #fff; border: none;
+  padding: 8px 18px; border-radius: 4px;
+  font-size: 13px; font-family: var(--font); font-weight: 500;
+  cursor: pointer; transition: background .15s; letter-spacing: 0.01em;
+}
+.btn-danger:hover:not(:disabled) { background: var(--color-danger-dark); }
+.btn-danger:disabled { opacity: .5; cursor: not-allowed; }
 
 /* ── Preview section ── */
 .preview-section h2 { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
