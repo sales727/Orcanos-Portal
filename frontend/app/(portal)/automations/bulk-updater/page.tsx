@@ -32,7 +32,10 @@ const STATUS_LABEL: Record<ItemStatus, string> = {
 
 const INITIAL_CONFIG: BulkUpdaterConfig = {
   accountName: "",
+  authType: "apikey",
   apiKey: "",
+  username: "",
+  password: "",
   filterId: 0,
   projectId: 0,
   itemType: "",
@@ -96,13 +99,7 @@ export default function BulkUpdaterPage() {
         prev.map((r, idx) => (idx === i ? { ...r, status: "in-progress" } : r))
       );
       try {
-        await updateItem(
-          config.accountName,
-          config.apiKey,
-          rows[i].id,
-          config.projectId,
-          descriptionHtml
-        );
+        await updateItem(config, rows[i].id, descriptionHtml);
         setProgressItems((prev) =>
           prev.map((r, idx) => (idx === i ? { ...r, status: "success" } : r))
         );
@@ -190,18 +187,72 @@ export default function BulkUpdaterPage() {
               </div>
             </div>
 
-            {/* API Key */}
-            <div className="form-row">
-              <label htmlFor="apiKey">API Key</label>
-              <input
-                id="apiKey"
-                type="password"
-                placeholder="Your Orcanos API key"
-                value={config.apiKey}
-                onChange={set("apiKey")}
-                required
-              />
+            {/* Authentication method toggle */}
+            <div className="form-row form-row--top">
+              <label>Authentication Method</label>
+              <div className="source-options">
+                <label className="source-option">
+                  <input
+                    type="radio"
+                    name="authType"
+                    value="apikey"
+                    checked={config.authType === "apikey"}
+                    onChange={() => setConfig((p) => ({ ...p, authType: "apikey" }))}
+                  />
+                  API Key
+                </label>
+                <label className="source-option">
+                  <input
+                    type="radio"
+                    name="authType"
+                    value="basic"
+                    checked={config.authType === "basic"}
+                    onChange={() => setConfig((p) => ({ ...p, authType: "basic" }))}
+                  />
+                  Basic Auth
+                </label>
+              </div>
             </div>
+
+            {/* Conditional: API key or username/password */}
+            {config.authType === "apikey" ? (
+              <div className="form-row">
+                <label htmlFor="apiKey">API Key</label>
+                <input
+                  id="apiKey"
+                  type="password"
+                  placeholder="Your Orcanos API key"
+                  value={config.apiKey}
+                  onChange={set("apiKey")}
+                  required
+                />
+              </div>
+            ) : (
+              <>
+                <div className="form-row">
+                  <label htmlFor="username">Username</label>
+                  <input
+                    id="username"
+                    type="text"
+                    placeholder="Your Orcanos username"
+                    value={config.username}
+                    onChange={set("username")}
+                    required
+                  />
+                </div>
+                <div className="form-row">
+                  <label htmlFor="password">Password</label>
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="Your Orcanos password"
+                    value={config.password}
+                    onChange={set("password")}
+                    required
+                  />
+                </div>
+              </>
+            )}
 
             {/* Project ID */}
             <div className="form-row">

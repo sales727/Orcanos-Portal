@@ -1,8 +1,9 @@
+import base64
 from typing import Optional
 
 import requests
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 router = APIRouter(prefix="/api/bulk-updater", tags=["bulk-updater"])
 
@@ -11,25 +12,47 @@ def _url(account_name: str, path: str) -> str:
     return f"https://app.orcanos.com/{account_name}{path}"
 
 
-def _get_headers(api_key: str) -> dict:
-    return {"OrcanosAPIKey": api_key, "Accept": "application/json"}
+class AuthFields(BaseModel):
+    """Shared by every request that needs to authenticate against Orcanos.
+
+    Either an API key, or a Basic Auth username/password — same two methods
+    the Importer tool offers.
+    """
+
+    auth_type: str = "apikey"  # "apikey" | "basic"
+    api_key: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _check_credentials(self):
+        if self.auth_type == "basic":
+            if not self.username or not self.password:
+                raise ValueError("username and password are required for basic auth")
+        elif not self.api_key:
+            raise ValueError("api_key is required for apikey auth")
+        return self
 
 
-def _post_headers(api_key: str) -> dict:
-    return {
-        "OrcanosAPIKey": api_key,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
+def _auth_headers(auth: AuthFields, content_type: Optional[str] = None) -> dict:
+    headers = {"Accept": "application/json"}
+    if content_type:
+        headers["Content-Type"] = content_type
+    if auth.auth_type == "basic":
+        token = base64.b64encode(f"{auth.username}:{auth.password}".encode()).decode()
+        headers["Authorization"] = f"Basic {token}"
+    else:
+        headers["OrcanosAPIKey"] = auth.api_key
+    return headers
 
 
-def _fetch_item_fields(account_name: str, api_key: str, item_id: str | int) -> dict:
+def _fetch_item_fields(account_name: str, auth: AuthFields, item_id: str | int) -> dict:
     for path in [
         f"/api/v2/Json/Get_Object/{item_id}",
         f"/api/v2/Json/QW_Get_Object/{item_id}",
     ]:
         try:
-            r = requests.get(_url(account_name, path), headers=_get_headers(api_key), timeout=30)
+            r = requests.get(_url(account_name, path), headers=_auth_headers(auth), timeout=30)
             if r.status_code == 404:
                 continue
             data = r.json()
@@ -54,9 +77,8 @@ def _is_frozen(item: dict) -> bool:
 
 # ── Models ────────────────────────────────────────────────────────────────────
 
-class PreviewRequest(BaseModel):
+class PreviewRequest(AuthFields):
     account_name: str
-    api_key: str
     filter_id: int
     project_id: int
     item_type: str
@@ -76,9 +98,8 @@ class PreviewResponse(BaseModel):
     items: list[PreviewItem]
 
 
-class UpdateItemRequest(BaseModel):
+class UpdateItemRequest(AuthFields):
     account_name: str
-    api_key: str
     item_id: str
     project_id: int
     description_html: str
@@ -96,9 +117,9 @@ def preview(req: PreviewRequest):
     else:
         if not req.template_id:
             raise HTTPException(400, "template_id required for template mode")
-        fields = _fetch_item_fields(req.account_name, req.api_key, req.template_id)
+        fields = _fetch_item_fields(req.account_name, req, req.template_id)
         if "Description" not in fields:
-            raise HTTPException(400, "Description field not found on template item. Check Account Name and API Key.")
+            raise HTTPException(400, "Description field not found on template item. Check Account Name and credentials.")
         description_html = fields.get("Description") or ""
 
     # Fetch all filter pages
@@ -115,7 +136,7 @@ def preview(req: PreviewRequest):
         try:
             r = requests.post(
                 _url(req.account_name, "/api/v2/Json/QW_Get_Filter_Results"),
-                headers=_post_headers(req.api_key),
+                headers=_auth_headers(req, content_type="application/json"),
                 json=body,
                 timeout=30,
             )
@@ -142,7 +163,7 @@ def preview(req: PreviewRequest):
 
 @router.post("/update-item")
 def update_item(req: UpdateItemRequest):
-    current = _fetch_item_fields(req.account_name, req.api_key, req.item_id)
+    current = _fetch_item_fields(req.account_name, req, req.item_id)
 
     payload = {
         **current,
@@ -155,7 +176,7 @@ def update_item(req: UpdateItemRequest):
     try:
         r = requests.post(
             _url(req.account_name, "/api/v2/Json/QW_Update_Object"),
-            headers=_post_headers(req.api_key),
+            headers=_auth_headers(req, content_type="application/json"),
             json=payload,
             timeout=30,
         )

@@ -1,14 +1,25 @@
 const base = process.env.NEXT_PUBLIC_API_URL ?? "";
 
+export type AuthType = "apikey" | "basic";
+
 export interface BulkUpdaterConfig {
   accountName: string;
+  authType: AuthType;
   apiKey: string;
+  username: string;
+  password: string;
   filterId: number;
   projectId: number;
   itemType: string;
   descriptionMode: "template" | "html";
   templateId?: number;
   customHtml?: string;
+}
+
+function authPayload(cfg: BulkUpdaterConfig) {
+  return cfg.authType === "basic"
+    ? { auth_type: "basic", username: cfg.username, password: cfg.password }
+    : { auth_type: "apikey", api_key: cfg.apiKey };
 }
 
 export interface PreviewItem {
@@ -28,7 +39,7 @@ export async function fetchPreview(cfg: BulkUpdaterConfig): Promise<PreviewResul
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       account_name: cfg.accountName,
-      api_key: cfg.apiKey,
+      ...authPayload(cfg),
       filter_id: cfg.filterId,
       project_id: cfg.projectId,
       item_type: cfg.itemType,
@@ -48,21 +59,15 @@ export async function fetchPreview(cfg: BulkUpdaterConfig): Promise<PreviewResul
   };
 }
 
-export async function updateItem(
-  accountName: string,
-  apiKey: string,
-  itemId: string,
-  projectId: number,
-  descriptionHtml: string
-): Promise<void> {
+export async function updateItem(cfg: BulkUpdaterConfig, itemId: string, descriptionHtml: string): Promise<void> {
   const res = await fetch(`${base}/api/bulk-updater/update-item`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      account_name: accountName,
-      api_key: apiKey,
+      account_name: cfg.accountName,
+      ...authPayload(cfg),
       item_id: itemId,
-      project_id: projectId,
+      project_id: cfg.projectId,
       description_html: descriptionHtml,
     }),
   });
