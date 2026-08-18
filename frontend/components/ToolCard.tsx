@@ -1,13 +1,13 @@
 import Link from "next/link";
 import {
   FileText, Search, MessageSquare, Shield, Terminal, Filter,
-  Database, AlertTriangle, Upload, type LucideIcon,
+  Database, AlertTriangle, Upload, GitBranch, type LucideIcon,
 } from "lucide-react";
 import type { Tool } from "@/lib/tools";
 
 const iconMap: Record<string, LucideIcon> = {
   FileText, Search, MessageSquare, Shield, Terminal, Filter,
-  Database, AlertTriangle, Upload,
+  Database, AlertTriangle, Upload, GitBranch,
 };
 
 export default function ToolCard({ tool }: { tool: Tool }) {

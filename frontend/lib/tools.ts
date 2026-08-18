@@ -59,6 +59,20 @@ export const tools: Tool[] = [
     avgDuration: "1–15 minutes",
   },
   {
+    id: "traceability",
+    slug: "traceability",
+    name: "Traceability Manager",
+    description:
+      "Create or delete traceability relations in bulk from an Excel file of Source Key / Target Key pairs.",
+    icon: "GitBranch",
+    category: "ALM",
+    tags: ["ALM", "Traceability", "API"],
+    status: "available",
+    requiredInputs: "Orcanos credentials and an .xlsx file",
+    expectedOutput: "Created/deleted relations, with a downloadable results report",
+    avgDuration: "1–10 minutes",
+  },
+  {
     id: "work-item-inspector",
     slug: "work-item-inspector",
     name: "Work Item Inspector",
