@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import Link from "next/link";
 import { ArrowLeft, Upload, Play, X, AlertTriangle, FileText, Info, Pencil } from "lucide-react";
 import { compareFiles, uploadFiles, type CompareForm, type ComparisonRow } from "@/lib/api";
@@ -20,11 +20,66 @@ const DEFAULT_FORM: CompareForm = {
   version_id: 5,
   parent_id: "",
   mode: "compare",
+  rev_underscore: false,
+};
+
+// ── PDF name alignment ────────────────────────────────────────────────────────
+// Some clients export PDFs with underscores (DMS-1234_Rev_B_Title.pdf) while the
+// source file uses spaces (DMS-1234 Rev B Title.docx). The backend pairs files by
+// the text before the first space, so such PDFs never meet their source file.
+// When enabled, each PDF takes its source file's exact name — nothing else is rewritten.
+
+type RenameStatus = "rename" | "same" | "nomatch" | "ambiguous" | "dup";
+
+interface PdfRename {
+  file: File;
+  newName: string | null;
+  status: RenameStatus;
+}
+
+const OPEN_EXTS = [".docx", ".xlsx", ".pptx"];
+const stem = (n: string) => n.replace(/\.[^.]+$/, "");
+// Ignore case; treat any run of spaces / underscores as one separator
+const normName = (n: string) => stem(n).toLowerCase().replace(/[\s_]+/g, " ").trim();
+const isPdf = (f: File) => f.name.toLowerCase().endsWith(".pdf");
+const isOpenFormat = (f: File) => OPEN_EXTS.some((ext) => f.name.toLowerCase().endsWith(ext));
+
+function planPdfRenames(files: File[]): PdfRename[] {
+  const sources = new Map<string, Set<string>>();
+  files.filter(isOpenFormat).forEach((f) => {
+    const k = normName(f.name);
+    sources.set(k, (sources.get(k) ?? new Set()).add(stem(f.name)));
+  });
+
+  const plan: PdfRename[] = files.filter(isPdf).map((file) => {
+    const match = sources.get(normName(file.name));
+    if (!match) return { file, newName: null, status: "nomatch" };
+    if (match.size > 1) return { file, newName: null, status: "ambiguous" };
+    const newName = `${[...match][0]}.pdf`;
+    return { file, newName, status: newName === file.name ? "same" : "rename" };
+  });
+
+  // Two PDFs landing on the same name would overwrite each other — skip both
+  const targets = new Map<string, number>();
+  plan.forEach((p) => p.newName && targets.set(p.newName, (targets.get(p.newName) ?? 0) + 1));
+  plan.forEach((p) => {
+    if (p.newName && targets.get(p.newName)! > 1) p.status = "dup";
+  });
+  return plan;
+}
+
+const RENAME_LABEL: Record<RenameStatus, [string, string]> = {
+  rename: ["Rename", "text-green-700"],
+  same: ["Already matches", "text-body"],
+  nomatch: ["No matching source file — kept as is", "text-orange-700"],
+  ambiguous: ["Several source files match — kept as is", "text-orange-700"],
+  dup: ["Duplicate target name — kept as is", "text-red-700"],
 };
 
 export default function DMSUploaderPage() {
   const [form, setForm] = useState<CompareForm>(DEFAULT_FORM);
   const [files, setFiles] = useState<File[]>([]);
+  const [alignPdfNames, setAlignPdfNames] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<ComparisonRow[] | null>(null);
@@ -45,6 +100,18 @@ export default function DMSUploaderPage() {
   };
 
   const removeFile = (i: number) => setFiles((prev) => prev.filter((_, j) => j !== i));
+
+  const renamePlan = useMemo(() => (alignPdfNames ? planPdfRenames(files) : []), [files, alignPdfNames]);
+
+  // The same renamed list goes to both /compare and /upload so their results line up
+  const effectiveFiles = useMemo(() => {
+    const renames = new Map(
+      renamePlan.filter((p) => p.status === "rename").map((p) => [p.file, p.newName!])
+    );
+    return files.map((f) =>
+      renames.has(f) ? new File([f], renames.get(f)!, { type: f.type, lastModified: f.lastModified }) : f
+    );
+  }, [files, renamePlan]);
 
   const toggleRow = (i: number, checked: boolean) =>
     setResults((prev) => prev!.map((r, j) => (j === i ? { ...r, selected: checked } : r)));
@@ -73,7 +140,7 @@ export default function DMSUploaderPage() {
     setRunError(null);
     setUploadResult(null);
     try {
-      const data = await compareFiles(files, form);
+      const data = await compareFiles(effectiveFiles, form);
       setResults(data);
     } catch (err: unknown) {
       setRunError(err instanceof Error ? err.message : String(err));
@@ -87,7 +154,7 @@ export default function DMSUploaderPage() {
     setIsUploading(true);
     setUploadResult(null);
     try {
-      const data = await uploadFiles(files, form, selectedRows);
+      const data = await uploadFiles(effectiveFiles, form, selectedRows);
       setUploadResult(data);
     } catch (err: unknown) {
       setUploadResult({ success: 0, failed: selectedRows.length, log: [String(err)] });
@@ -159,6 +226,7 @@ export default function DMSUploaderPage() {
             <ol className="text-body text-sm space-y-1 list-decimal list-inside">
               <li>Enter your Orcanos account name and API key below.</li>
               <li>Upload all relevant files — PDF for the signed copy, DOCX / XLSX / PPTX for the editable source.</li>
+              <li>If the PDF names use underscores where the source files use spaces, enable <span className="font-medium text-heading">Align PDF names to their source files</span> and check the rename preview.</li>
               <li>Click <span className="font-medium text-heading">Run Automation</span> to compare against the live DMS.</li>
               <li>Review the results table — you can edit Name, Legacy Key, and Legacy Revision inline before uploading.</li>
               <li>Deselect any rows you want to skip, then click <span className="font-medium text-heading">Upload Selected</span>.</li>
@@ -260,6 +328,26 @@ export default function DMSUploaderPage() {
               </div>
             )}
           </Field>
+
+          <div className="space-y-3 border-t border-border pt-5">
+            <p className="text-xs font-semibold text-heading uppercase tracking-wide">File name options</p>
+
+            <OptionToggle
+              checked={alignPdfNames}
+              onChange={(v) => { setAlignPdfNames(v); setResults(null); }}
+              label="Align PDF names to their source files"
+              hint={<>For PDFs exported with underscores instead of spaces (e.g. <span className="font-mono">DMS-1234_Rev_B_Title.pdf</span>). Each PDF takes the exact name of its DOCX / XLSX / PPTX file; matching ignores case and treats spaces and underscores as the same. Files on your computer are not changed.</>}
+            />
+
+            {alignPdfNames && files.length > 0 && <RenamePreview plan={renamePlan} />}
+
+            <OptionToggle
+              checked={form.rev_underscore}
+              onChange={(v) => { setForm((f) => ({ ...f, rev_underscore: v })); setResults(null); }}
+              label={<>Treat <span className="font-mono">Rev_01</span> as a revision</>}
+              hint={<>For clients that write the revision with an underscore (<span className="font-mono">Rev_01</span>, <span className="font-mono">Rev_B</span>). Leave off when &quot;Rev_…&quot; is part of the document name.</>}
+            />
+          </div>
         </div>
 
         <div className="flex items-start gap-3 bg-warning-bg border border-warning-border rounded-lg px-4 py-3 mb-6">
@@ -426,6 +514,58 @@ const inputCls =
 
 const editInputCls =
   "w-full bg-transparent border-b border-transparent hover:border-gray-300 focus:border-purple-medium focus:outline-none text-sm py-0.5 transition-colors";
+
+function OptionToggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: React.ReactNode; hint: React.ReactNode }) {
+  return (
+    <label className="flex items-start gap-2.5 cursor-pointer">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 w-4 h-4 accent-purple-primary cursor-pointer shrink-0" />
+      <span>
+        <span className="block text-sm font-medium text-heading">{label}</span>
+        <span className="block text-xs text-body mt-0.5">{hint}</span>
+      </span>
+    </label>
+  );
+}
+
+function RenamePreview({ plan }: { plan: PdfRename[] }) {
+  if (plan.length === 0) {
+    return <p className="ml-6 text-xs text-body">No PDF files added yet.</p>;
+  }
+  const count = (s: RenameStatus) => plan.filter((p) => p.status === s).length;
+  const attention = count("nomatch") + count("ambiguous") + count("dup");
+  return (
+    <div className="ml-6">
+      <div className="flex flex-wrap gap-2 mb-2 text-xs">
+        <span className="px-2.5 py-1 rounded-full font-medium bg-green-100 text-green-800">Will be renamed: {count("rename")}</span>
+        <span className="px-2.5 py-1 rounded-full font-medium bg-gray-100 text-gray-600">Already match: {count("same")}</span>
+        {attention > 0 && (
+          <span className="px-2.5 py-1 rounded-full font-medium bg-orange-100 text-orange-700">Need attention: {attention}</span>
+        )}
+      </div>
+      <div className="overflow-auto max-h-64 rounded-lg border border-border">
+        <table className="w-full text-xs">
+          <thead className="sticky top-0 bg-gray-50">
+            <tr className="border-b border-border text-left">
+              {["Current PDF name", "Name sent to Orcanos", "Status"].map((h) => (
+                <th key={h} className="py-2 px-3 font-medium text-body uppercase tracking-wide whitespace-nowrap">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {plan.map((p, i) => (
+              <tr key={i} className="border-b border-border/40">
+                <td className="py-2 px-3 text-body break-all">{p.file.name}</td>
+                <td className="py-2 px-3 text-heading break-all">{p.status === "rename" ? p.newName : "—"}</td>
+                <td className={`py-2 px-3 whitespace-nowrap ${RENAME_LABEL[p.status][1]}`}>{RENAME_LABEL[p.status][0]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 function Field({ label, required, tooltip, children }: { label: string; required?: boolean; tooltip?: string; children: React.ReactNode }) {
   return (

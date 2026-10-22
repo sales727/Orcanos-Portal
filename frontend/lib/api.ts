@@ -6,6 +6,7 @@ export interface CompareForm {
   version_id: number;
   parent_id: string;
   mode: "compare" | "scratch";
+  rev_underscore: boolean;   // treat "Rev_01" / "Rev_B" as a revision (client-specific)
 }
 
 export interface ComparisonRow {
@@ -35,6 +36,7 @@ export async function compareFiles(
   fd.append("filter_id", String(form.filter_id));
   fd.append("version_id", String(form.version_id));
   fd.append("mode", form.mode);
+  fd.append("rev_underscore", String(form.rev_underscore));
 
   const base = process.env.NEXT_PUBLIC_API_URL ?? "";
   const res = await fetch(`${base}/api/dms/compare`, { method: "POST", body: fd });
@@ -64,6 +66,7 @@ export async function uploadFiles(
   fd.append("version_id", String(form.version_id));
   fd.append("parent_id", form.parent_id);
   fd.append("mode", form.mode);
+  fd.append("rev_underscore", String(form.rev_underscore));
   fd.append("selected_dms", JSON.stringify(selectedRows.map((r) => r.original_dms)));
   fd.append("overrides", JSON.stringify(selectedRows.map((r) => ({
     original_dms: r.original_dms,

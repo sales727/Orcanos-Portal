@@ -8,6 +8,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from tools.dms.comparison import (
+    REV_RE_UNDERSCORE,
     compare_with_orcanos,
     load_files_from_bytes,
     parse_orcanos_items,
@@ -70,10 +71,13 @@ async def compare(
     filter_id: int = Form(25),
     version_id: int = Form(5),
     mode: str = Form("compare"),
+    rev_underscore: bool = Form(False),
 ):
     file_data = [{"filename": f.filename, "bytes": await f.read()} for f in files]
 
-    documents = load_files_from_bytes(file_data)
+    documents = load_files_from_bytes(
+        file_data, rev_regex=REV_RE_UNDERSCORE if rev_underscore else None
+    )
     if not documents:
         raise HTTPException(400, "No files matched the naming pattern.")
 
@@ -140,6 +144,7 @@ async def upload(
     selected_dms: str = Form(...),
     overrides: str = Form("[]"),
     mode: str = Form("compare"),
+    rev_underscore: bool = Form(False),
 ):
     from tools.dms.comparison import ComparisonResult
 
@@ -147,7 +152,9 @@ async def upload(
     overrides_map = {o["original_dms"]: o for o in json.loads(overrides)}
     file_data = [{"filename": f.filename, "bytes": await f.read()} for f in files]
 
-    documents = load_files_from_bytes(file_data)
+    documents = load_files_from_bytes(
+        file_data, rev_regex=REV_RE_UNDERSCORE if rev_underscore else None
+    )
 
     log_lines: list[str] = []
 

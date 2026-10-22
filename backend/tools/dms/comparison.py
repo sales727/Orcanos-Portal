@@ -47,6 +47,14 @@ _REV_RE = re.compile(
     r"|[Rr]ev\.?\s*(\d+)"
 )
 
+# Opt-in variant for clients that write the revision with an underscore (Rev_01, Rev_B).
+# Not the default: for other clients "Rev_..." can be part of the document name.
+REV_RE_UNDERSCORE = re.compile(
+    r"[Rr]ev[._\s]*([A-Za-z])-?(\d+)"
+    r"|[Rr]ev[._\s]*([A-Za-z])(?![A-Za-z0-9])"
+    r"|[Rr]ev[._\s]*(\d+)"
+)
+
 
 def parse_dms_filename(filename: str, key_prefix: str = "DMS-",
                        rev_regex: re.Pattern = None) -> Optional[DocumentFile]:
