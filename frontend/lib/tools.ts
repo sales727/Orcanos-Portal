@@ -73,6 +73,20 @@ export const tools: Tool[] = [
     avgDuration: "1–10 minutes",
   },
   {
+    id: "parent-updater",
+    slug: "parent-updater",
+    name: "Parent Updater",
+    description:
+      "Bulk-set the Parent_ID of work items from a CSV of Key / Parent Key pairs.",
+    icon: "GitMerge",
+    category: "ALM",
+    tags: ["ALM", "Bulk", "API"],
+    status: "available",
+    requiredInputs: "Orcanos credentials and a .csv file",
+    expectedOutput: "Updated parent relationships, with a downloadable results report",
+    avgDuration: "1–10 minutes",
+  },
+  {
     id: "work-item-inspector",
     slug: "work-item-inspector",
     name: "Work Item Inspector",
